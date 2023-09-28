@@ -244,7 +244,8 @@ def radiation_pressure(t0, state, k, R, C_R, A_over_m, Wdivc_s, star):
 
 
 def JN_perturbation(t0, state, k, Jn, R):
-    '''
+    r"""Calcualte the J1 through Jn perturbation acceleration (km/s2).
+    
     Parameters
     ----------
     t0 : float
@@ -257,7 +258,12 @@ def JN_perturbation(t0, state, k, Jn, R):
         Highest desired gravitational J term to utilize (1 to 6)
     R : float
         Attractor radius
-    '''
+        
+    Notes
+    -----
+    Up to J6 currently supported.
+    
+    """
 
     ####################################
     ### Legendre Polynomial Function ###
