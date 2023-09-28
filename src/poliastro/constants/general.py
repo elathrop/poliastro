@@ -95,6 +95,9 @@ __all__ = [
     "J2_sun",
     "J2_earth",
     "J3_earth",
+    "J4_earth",
+    "J5_earth",
+    "J6_earth",
     "J2_mars",
     "J3_mars",
     "J2_venus",
@@ -700,6 +703,36 @@ J3_earth = Constant(
     "",
     1,
     "HAL archives",
+    system="si",
+)
+
+J4_earth = Constant(
+    "J4_earth",
+    "Earth J4",
+    -1.6246180e-6,
+    "",
+    1,
+    "Compilation of Methods in Orbital Mechanics and Solar Geometry",
+    system="si",
+)
+
+J5_earth = Constant(
+    "J5_earth",
+    "Earth J5",
+    -0.22698599e-6,
+    "",
+    1,
+    "Compilation of Methods in Orbital Mechanics and Solar Geometry",
+    system="si",
+)
+
+J6_earth = Constant(
+    "J6_earth",
+    "Earth J6",
+    0.54518572e-6,
+    "",
+    1,
+    "Compilation of Methods in Orbital Mechanics and Solar Geometry",
     system="si",
 )
 

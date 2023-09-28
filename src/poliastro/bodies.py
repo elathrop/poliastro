@@ -61,6 +61,9 @@ class Body(
             "rotational_period",
             "J2",
             "J3",
+            "J4",
+            "J5",
+            "J6",
             "mass",
             "mean_a",
         ],
@@ -80,6 +83,9 @@ class Body(
         rotational_period=0.0 * u.day,
         J2=0.0 * u.one,
         J3=0.0 * u.one,
+        J4=0.0 * u.one,
+        J5=0.0 * u.one,
+        J6=0.0 * u.one,
         mass=None,
         mean_a=0.0 * u.km,
     ):
@@ -98,6 +104,9 @@ class Body(
             _q(rotational_period),
             _q(J2),
             _q(J3),
+            _q(J4),
+            _q(J5),
+            _q(J6),
             _q(mass),
             _q(mean_a),
         )
@@ -212,6 +221,9 @@ Earth = SolarSystemPlanet(
     mass=constants.M_earth,
     J2=constants.J2_earth,
     J3=constants.J3_earth,
+    J4=constants.J4_earth,
+    J5=constants.J5_earth,
+    J6=constants.J6_earth,
     mean_a=constants.mean_a_earth,
 )
 
