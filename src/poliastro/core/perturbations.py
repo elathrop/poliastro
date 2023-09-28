@@ -1,9 +1,10 @@
 from numba import njit as jit
 import numpy as np
+import scipy.special
 
 from poliastro._math.linalg import norm
 from poliastro.core.events import line_of_sight as line_of_sight_fast
-
+from poliastro.bodies import Earth
 
 @jit
 def J2_perturbation(t0, state, k, J2, R):
@@ -240,3 +241,89 @@ def radiation_pressure(t0, state, k, R, C_R, A_over_m, Wdivc_s, star):
 
     nu = float(line_of_sight_fast(r_sat, r_star, R) > 0)
     return -nu * P_s * (C_R * A_over_m) * r_star / norm(r_star)
+
+
+def JN_perturbation(t0, state, k, Jn, R):
+    '''
+    Parameters
+    ----------
+    t0 : float
+        Current time (s).
+    state : numpy.ndarray
+        Six component state vector [x, y, z, vx, vy, vz] (km, km/s).
+    k : float
+        Standard Gravitational parameter. (km^3/s^2)
+    Jn : float
+        Highest desired gravitational J term to utilize (1 to 6)
+    R : float
+        Attractor radius
+    '''
+
+    ####################################
+    ### Legendre Polynomial Function ###
+    ####################################
+    # built-in Legendre function outputs a lot of extraneous info
+    def P(m,l,x):
+        ans = scipy.special.lpmn(m,l,x)
+        return(ans[0][m][l])
+
+    #########################
+    ### Declare Variables ###
+    #########################
+    x = state[0]
+    y = state[1]
+    z = state[2]
+
+    # Values from NASA "Compilation of Methods in Orbital Mechanics and Solar Geometry"
+    # current as of 1986
+    J = [0,0]
+    J.append(Earth.J2.value) 
+    J.append(Earth.J3.value)
+    J.append(Earth.J4.value)
+    J.append(Earth.J5.value)
+    J.append(Earth.J6.value)
+
+    r = (x**2 + y**2 + z**2)**0.5 # vector from Earth center to satellite
+    trig = z/r  # This conforms to sin(phi)
+
+    ###################################################
+    ### Calculate PERTURBED gravitational potential ###
+    ###################################################
+    # Equations from Vallado
+    #   ***Zonal Harmonic Assumption***
+    if Jn == 2:
+        U = (k/r)*(-J[2]*((R/r)**2)*P(0,2,trig))
+    elif Jn == 3:
+        U = (k/r)*(-J[2]*((R/r)**2)*P(0,2,trig) - J[3]*((R/r)**3)*P(0,3,trig))
+    elif Jn == 4:
+        U = (k/r)*(-J[2]*((R/r)**2)*P(0,2,trig) - J[3]*((R/r)**3)*P(0,3,trig) - J[4]*((R/r)**4)*P(0,4,trig))
+    elif Jn == 5:
+        U = (k/r)*(-J[2]*((R/r)**2)*P(0,2,trig) - J[3]*((R/r)**3)*P(0,3,trig) - J[4]*((R/r)**4)*P(0,4,trig) - J[5]*((R/r)**5)*P(0,5,trig))
+    else:
+        U = (k/r)*(-J[2]*((R/r)**2)*P(0,2,trig) - J[3]*((R/r)**3)*P(0,3,trig) - J[4]*((R/r)**4)*P(0,4,trig) - J[5]*((R/r)**5)*P(0,5,trig) - J[6]*((R/r)**6)*P(0,6,trig))
+
+    ######################################################
+    ### Calculate PERTURBED gravitational acceleration ###
+    ######################################################
+    # Equations from Vallado
+    #   ***Zonal Harmonic Assumption***
+
+    l = 2
+    m = 0
+    dU_dr = 0   #partial derivative of grav potential in radial direction
+    dU_dphi = 0 #partial derivative of grav potential in latitudinal direction
+    dU_dlam = 0 #partial derivative of grav potential in longitudinal direction
+    while l <= Jn:
+        dU_dr = dU_dr + ((R/r)**l)*(l+1)*P(m,l,trig)*(J[l])
+        dU_dphi = dU_dphi + ((R/r)**l)*P(m+1,l,trig)*(J[l])
+        dU_dlam = dU_dlam + 0
+        l += 1
+    dU_dr = dU_dr * (-k/(r**2))
+    dU_dphi = dU_dphi * (k/r)
+    dU_dlam = dU_dlam * (k/r)
+
+    a_i = ((1/r)*dU_dr - (z/((r**2)*(x**2 + y**2)**0.5))*dU_dphi)*x - ((1/(x**2 + y**2))*dU_dlam)*y - k*x/(r**3)
+    a_j = ((1/r)*dU_dr - (z/((r**2)*(x**2 + y**2)**0.5))*dU_dphi)*y + ((1/(x**2 + y**2))*dU_dlam)*x - k*y/(r**3)
+    a_k = (1/r)*dU_dr*z + (((x**2 + y**2)**0.5)/r**2)*dU_dphi - k*z/(r**3)
+
+    return np.array([a_i, a_j, a_k])
